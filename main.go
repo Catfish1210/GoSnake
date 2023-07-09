@@ -1,57 +1,58 @@
 package main
 
+//110 x 40 Terminal size
 import (
-	// GoSnake "GoSnake/src"
+	GoSnake "GoSnake/src"
 	"fmt"
+	"sync"
 
 	"github.com/nsf/termbox-go"
 )
 
 func main() {
 	// f := GoSnake.Banner
-	MenuSelector()
-	err := termbox.Init()
-	if err != nil {
-		panic(err)
-	}
-	defer termbox.Close()
+	MenuSelector(0)
+	// err := termbox.Init()
+	// if err != nil {
+	// 	panic(err)
+	// }
+	// defer termbox.Close()
 
-	keyPress := make(chan termbox.Event)
+	// keyPress := make(chan termbox.Event)
 
-	go func() {
-		for {
-			keySeq := termbox.PollEvent()
-			keyPress <- keySeq
-		}
-	}()
-
-	//func generate menu
-	// go GetMenu(){
-
+	// go func() {
+	// 	for {
+	// 		keySeq := termbox.PollEvent()
+	// 		keyPress <- keySeq
+	// 	}
 	// }()
 
-	for {
-		keySeq := <-keyPress
-		if keySeq.Type == termbox.EventKey {
-			if keySeq.Ch == 'h' {
-				fmt.Println("Hello World!")
-				// DisplayMenu()
+	// //func generate menu
+	// // go GetMenu(){
 
-			} else if keySeq.Key == termbox.KeyEsc || keySeq.Key == termbox.KeyCtrlC {
-				break
-			}
-		}
-	}
+	// // }()
+
+	// for {
+	// 	keySeq := <-keyPress
+	// 	if keySeq.Type == termbox.EventKey {
+	// 		if keySeq.Ch == 'h' {
+	// 			fmt.Println("Hello World!")
+	// 			// DisplayMenu()
+
+	// 		} else if keySeq.Key == termbox.KeyEsc || keySeq.Key == termbox.KeyCtrlC {
+	// 			break
+	// 		}
+	// 	}
+	// }
 
 }
 
 type Options struct {
-	display  [][]string
-	selector [][]string
-	active   int
+	display [][]string
+	active  int
 }
 
-func MenuSelector() {
+func MenuSelector(preselect int) {
 
 	err := termbox.Init()
 	if err != nil {
@@ -60,7 +61,6 @@ func MenuSelector() {
 	defer termbox.Close()
 
 	keyPress := make(chan termbox.Event)
-
 	go func() {
 		for {
 			keySeq := termbox.PollEvent()
@@ -97,29 +97,11 @@ func MenuSelector() {
 		"\\___\\_\\_,_/_/\\__/ ",
 	}
 
-	activeOption := [][]string{
-		{
-			"__   ",
-			"\\ \\  ",
-			" > > ",
-			"/_/  ",
-		},
-		{
-			"  __ ",
-			" / / ",
-			"< <  ",
-			" \\_\\ ",
-		},
-	}
-
 	var menuOptions Options
-	menuOptions.active = 0
 	menuOptions.display = append(menuOptions.display, playOption, levelOption, highscoresOption, quitOption)
-	menuOptions.selector = activeOption
 
-	// terminalWidth, terminalHeight := termbox.Size()
+	menuOptions.active = preselect
 
-	// Display Banner
 	banner := []string{
 		"╔══════════════════════════════════════════════════════╗",
 		"║       _____          _____             _             ║",
@@ -147,74 +129,132 @@ func MenuSelector() {
 
 	optionPosY := dynamicPosY + 1
 	optionPosX := (terminalWidth / 2)
-
-	//apply selector to first option
-	// for i, v := range menuOptions.display[menuOptions.active] {
-	// 	if menuOptions.active == i {
-	// 		combinedLine := menuOptions.selector[0][i] + v + menuOptions.selector[1][i]
-	// 		menuOptions.display[menuOptions.active][i] = combinedLine
-	// 	}
-	// }
-
-	for _, option := range menuOptions.display {
-		for _, line := range option {
+	var optionsCords [][]int
+	for i, option := range menuOptions.display {
+		for i2, line := range option {
 			optionPosX = (terminalWidth / 2) - (len(line) / 2)
+			if i2 == 0 {
+				optionsCords = append(optionsCords, []int{optionPosX, optionPosY, len(line)})
+			}
 			for _, char := range line {
-				termbox.SetCell(optionPosX, optionPosY, char, termbox.ColorDefault, termbox.ColorDefault)
-				optionPosX++
+				if i == preselect {
+					termbox.SetCell(optionPosX, optionPosY, char, termbox.ColorRed, termbox.ColorDefault)
+					optionPosX++
+				} else {
+					termbox.SetCell(optionPosX, optionPosY, char, termbox.ColorDefault, termbox.ColorDefault)
+					optionPosX++
+				}
+
 			}
 			optionPosY++
 		}
 		optionPosY++
 	}
-
+	optionSelector(preselect, optionsCords)
 	termbox.Sync()
 
 	for {
 		keySeq := <-keyPress
 		if keySeq.Type == termbox.EventKey {
-			if keySeq.Ch == 'h' {
-				fmt.Println('h')
-			} else if keySeq.Key == termbox.KeyEsc || keySeq.Key == termbox.KeyCtrlC {
+			if keySeq.Key == termbox.KeyEsc || keySeq.Key == termbox.KeyCtrlC {
+				termbox.Close()
 				break
+			}
+
+			if keySeq.Ch == 'w' {
+				fmt.Println("wtf")
+				optionDeselector(optionsCords)
+				termbox.Sync()
+			} else if keySeq.Ch == 's' {
+
 			}
 		}
 	}
 
 }
 
-// banner := []string{
-// 	"   _____          _____             _         ",
-// 	"  / ____|        / ____|           | |        ",
-// 	" | |  __  ___   | (___  _ __   __ _| | _____  ",
-// 	" | | |_ |/ _ \\   \\___ \\| '_ \\ / _` | |/ / _ \\ ",
-// 	" | |__| | (_) |  ____) | | | | (_| |   <  __/ ",
-// 	"  \\_____|\\___/  |_____/|_| |_|\\__,_|_|\\_\\___| ",
-// }
+func optionSelector(active int, optionsPos [][]int) {
+	var wg sync.WaitGroup
+	wg.Add(2)
 
-// func displayBanner() {
-// 	banner := []string{
-// 		"   _____          _____             _         ",
-// 		"  / ____|        / ____|           | |        ",
-// 		" | |  __  ___   | (___  _ __   __ _| | _____  ",
-// 		" | | |_ |/ _ \\   \\___ \\| '_ \\ / _` | |/ / _ \\ ",
-// 		" | |__| | (_) |  ____) | | | | (_| |   <  __/ ",
-// 		"  \\_____|\\___/  |_____/|_| |_|\\__,_|_|\\_\\___| ",
-// 	}
-// 	terminalWidth, terminalHeight := termbox.Size()
+	// go func() {
+	// 	defer wg.Done() // Notify the wait group when this goroutine is done
+	// 	selectorL := GoSnake.ActiveOption[0]
 
-// 	// Display Banner
-// 	bannerPosY := terminalHeight / 8
-// 	bannerPosX := (terminalWidth / 2) - 23
-// 	dynamicPosY := bannerPosY
-// 	for _, line := range banner {
-// 		dynamicPosX := bannerPosX
-// 		for _, char := range line {
-// 			termbox.SetCell(dynamicPosX, dynamicPosY, char, termbox.ColorGreen, termbox.ColorDefault)
-// 			dynamicPosX++
-// 		}
-// 		dynamicPosY++
-// 	}
-// 	termbox.Sync()
+	// 	for i := 0; i < 4; i++ {
 
-// }
+	// 		initialX := optionsPos[i][0] - 5
+	// 		initialY := optionsPos[i][1]
+
+	// 		for _, line := range selectorL {
+	// 			activeX := initialX
+	// 			for _, ch := range line {
+	// 				ch = ' '
+	// 				termbox.SetCell(activeX, initialY, ch, termbox.ColorDefault, termbox.ColorDefault)
+	// 				activeX++
+	// 			}
+	// 			initialY++
+	// 		}
+	// 	}
+
+	// }()
+
+	go func() {
+		defer wg.Done()
+		selectorR := GoSnake.ActiveOption[1]
+		initialX := optionsPos[active][0] + optionsPos[active][2] + 1
+		initialY := optionsPos[active][1]
+
+		for _, line := range selectorR {
+			activeX := initialX
+			for _, ch := range line {
+				termbox.SetCell(activeX, initialY, ch, termbox.ColorDefault, termbox.ColorDefault)
+				activeX++
+			}
+			initialY++
+		}
+	}()
+
+	go func() {
+		defer wg.Done()
+		selectorL := GoSnake.ActiveOption[0]
+		initialX := optionsPos[active][0] - 5
+		initialY := optionsPos[active][1]
+
+		for _, line := range selectorL {
+			activeX := initialX
+			for _, ch := range line {
+				termbox.SetCell(activeX, initialY, ch, termbox.ColorDefault, termbox.ColorDefault)
+				activeX++
+			}
+			initialY++
+		}
+	}()
+
+	// termbox.SetCell(optionsPos[1][0], optionsPos[1][1], 'X', termbox.ColorDefault, termbox.ColorDefault)
+	// termbox.SetCell(optionsPos[2][0], optionsPos[2][1], 'X', termbox.ColorDefault, termbox.ColorDefault)
+	// termbox.SetCell(optionsPos[3][0], optionsPos[3][1], 'X', termbox.ColorDefault, termbox.ColorDefault)
+	wg.Wait()
+}
+
+func optionDeselector(optionsPos [][]int) {
+	for i := 0; i >= len(optionsPos); i++ {
+		initialX := optionsPos[i][0] - 5
+		initialY := optionsPos[i][1]
+
+		for j := 0; j >= 3; j++ {
+			for k := 0; k >= 4; k++ {
+				termbox.SetCell(initialX+k, initialY+j, ' ', termbox.ColorDefault, termbox.ColorDefault)
+			}
+		}
+	}
+
+}
+
+// selectorR := GoSnake.ActiveOption[1]
+// initialX := optionsPos[active][0] + optionsPos[active][2] + 1
+// initialY := optionsPos[active][1]
+
+// selectorL := GoSnake.ActiveOption[0]
+// initialX := optionsPos[active][0] - 5
+// initialY := optionsPos[active][1]
