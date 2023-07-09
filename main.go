@@ -2,12 +2,16 @@ package main
 
 //110 x 40 Terminal size
 import (
+	GoSnake "GoSnake/src"
+	"fmt"
+
 	"github.com/nsf/termbox-go"
 )
 
 func main() {
 	// f := GoSnake.Banner
-	MenuSelector(0)
+	// fmt.Println(MenuSelector(0))
+	fmt.Println(GoSnake.MenuSelector(0))
 	// err := termbox.Init()
 	// if err != nil {
 	// 	panic(err)
@@ -46,9 +50,10 @@ func main() {
 type Options struct {
 	display [][]string
 	active  int
+	banner  []string
 }
 
-func MenuSelector(preselect int) {
+func MenuSelector(preselect int) int {
 	err := termbox.Init()
 	if err != nil {
 		panic(err)
@@ -63,88 +68,13 @@ func MenuSelector(preselect int) {
 		}
 	}()
 
-	playOption := []string{
-		"   ___  __         ",
-		"  / _ \\/ /__ ___ __",
-		" / ___/ / _ `/ // /",
-		"/_/  /_/\\_,_/\\_, / ",
-		"            /___/  ",
-	}
-	levelOption := []string{
-		"   __                __",
-		"  / /  ___ _  _____ / /",
-		" / /__/ -_) |/ / -_) / ",
-		"/____/\\__/|___/\\__/_/  ",
-	}
-
-	highscoresOption := []string{
-		"   __ ___      __     ____                   ",
-		"  / // (_)__ _/ /    / __/______  _______ ___",
-		" / _  / / _ `/ _ \\  _\\ \\/ __/ _ \\/ __/ -_|_-<",
-		"/_//_/_/\\_, /_//_/ /___/\\__/\\___/_/  \\__/___/",
-		"       /___/                                 ",
-	}
-
-	quitOption := []string{
-		"  ____       _ __ ",
-		" / __ \\__ __(_) /_",
-		"/ /_/ / // / / __/",
-		"\\___\\_\\_,_/_/\\__/ ",
-	}
-
 	var menuOptions Options
-	menuOptions.display = append(menuOptions.display, playOption, levelOption, highscoresOption, quitOption)
+	menuOptions.display = append(menuOptions.display, GoSnake.PlayOption, GoSnake.LevelOption, GoSnake.HighscoresOption, GoSnake.QuitOption)
 	menuOptions.active = preselect
+	menuOptions.banner = GoSnake.Banner
 
-	banner := []string{
-		"╔══════════════════════════════════════════════════════╗",
-		"║       _____          _____             _             ║",
-		"║      / ____|        / ____|           | |            ║",
-		"║     | |  __  ___   | (___  _ __   __ _| | _____      ║",
-		"║     | | |_ |/ _ \\   \\___ \\| '_ \\ / _` | |/ / _ \\     ║",
-		"║     | |__| | (_) |  ____) | | | | (_| |   <  __/     ║",
-		"║      \\_____|\\___/  |_____/|_| |_|\\__,_|_|\\_\\___|     ║",
-		"║                                                      ║",
-		"╚══════════════════════════════════════════════════════╝ ",
-	}
-	terminalWidth, terminalHeight := termbox.Size()
-
-	bannerPosY := (terminalHeight / 8) - 2
-	bannerPosX := (terminalWidth / 2) - (len(banner[1]) / 2)
-	dynamicPosY := bannerPosY
-	for _, line := range banner {
-		dynamicPosX := bannerPosX
-		for _, char := range line {
-			termbox.SetCell(dynamicPosX, dynamicPosY, char, termbox.ColorGreen, termbox.ColorDefault)
-			dynamicPosX++
-		}
-		dynamicPosY++
-	}
+	dynamicPosY := generateBanner(menuOptions)
 	updateMenuDisplay(menuOptions, dynamicPosY)
-	// optionPosY := dynamicPosY + 1
-	// optionPosX := (terminalWidth / 2)
-	// var optionsCords [][]int
-	// for i, option := range menuOptions.display {
-	// 	for i2, line := range option {
-	// 		optionPosX = (terminalWidth / 2) - (len(line) / 2)
-	// 		if i2 == 0 {
-	// 			optionsCords = append(optionsCords, []int{optionPosX, optionPosY, len(line)})
-	// 		}
-	// 		for _, char := range line {
-	// 			if i == preselect {
-	// 				termbox.SetCell(optionPosX, optionPosY, char, termbox.ColorRed, termbox.ColorDefault)
-	// 				optionPosX++
-	// 			} else {
-	// 				termbox.SetCell(optionPosX, optionPosY, char, termbox.ColorDefault, termbox.ColorDefault)
-	// 				optionPosX++
-	// 			}
-
-	// 		}
-	// 		optionPosY++
-	// 	}
-	// 	optionPosY++
-	// }
-	// termbox.Sync()
 
 	for {
 		keySeq := <-keyPress
@@ -165,9 +95,39 @@ func MenuSelector(preselect int) {
 					menuOptions.active += 1
 					updateMenuDisplay(menuOptions, dynamicPosY)
 				}
+			} else if keySeq.Key == termbox.KeyEnter || keySeq.Ch == 'd' {
+				if menuOptions.active == 0 {
+					return menuOptions.active
+				} else if menuOptions.active == 1 {
+
+				} else if menuOptions.active == 2 {
+
+				} else if menuOptions.active == 3 {
+
+				}
+
 			}
 		}
 	}
+	return -1
+}
+
+func generateBanner(menuOptions Options) int {
+
+	terminalWidth, terminalHeight := termbox.Size()
+
+	bannerPosY := (terminalHeight / 8) - 2
+	bannerPosX := (terminalWidth / 2) - (len(GoSnake.Banner[1]) / 2)
+	dynamicPosY := bannerPosY
+	for _, line := range GoSnake.Banner {
+		dynamicPosX := bannerPosX
+		for _, char := range line {
+			termbox.SetCell(dynamicPosX, dynamicPosY, char, termbox.ColorGreen, termbox.ColorDefault)
+			dynamicPosX++
+		}
+		dynamicPosY++
+	}
+	return dynamicPosY
 }
 
 func updateMenuDisplay(menuOptions Options, dynamicPosY int) {
