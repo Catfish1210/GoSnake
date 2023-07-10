@@ -1,15 +1,18 @@
 package GoSnake
 
 import (
+	"fmt"
 	"os"
+	"time"
 
 	"github.com/nsf/termbox-go"
 )
 
 type Options struct {
-	display [][]string
-	active  int
-	banner  []string
+	display    [][]string
+	active     int
+	banner     []string
+	difficulty int
 }
 
 func MenuSelector(preselect int) int {
@@ -59,9 +62,13 @@ func MenuSelector(preselect int) int {
 					return menuOptions.active
 				} else if menuOptions.active == 1 {
 					//inner menu (another menu inside of banner)
-					menuOptions.banner = BannerEmpty
+					// menuOptions.banner = BannerEmpty
+					// _ = generateBanner(menuOptions)
+					// termbox.Sync()
+					menuOptions.difficulty = getDifficulty(menuOptions)
+					menuOptions.banner = Banner
 					_ = generateBanner(menuOptions)
-					termbox.Sync()
+					fmt.Println(menuOptions.difficulty)
 				} else if menuOptions.active == 2 {
 					//display scores in empty banner(include back function to menu)
 				} else if menuOptions.active == 3 {
@@ -73,6 +80,130 @@ func MenuSelector(preselect int) int {
 		}
 	}
 	return -1
+}
+
+func getDifficulty(menuOptions Options) int {
+
+	err := termbox.Init()
+	if err != nil {
+		panic(err)
+	}
+	defer termbox.Close()
+
+	keyPress := make(chan termbox.Event)
+	go func() {
+		for {
+			keySeq := termbox.PollEvent()
+			keyPress <- keySeq
+		}
+	}()
+
+	menuOptions.banner = BannerEmpty
+	_ = generateBanner(menuOptions)
+
+	terminalWidth, terminalHeight := termbox.Size()
+	difficultyPosY := (terminalHeight / 8) + 1
+	difficultyPosX := (terminalWidth / 2) - (len(Banner[1]) / 2) + 9
+	difficultyCords := []int{difficultyPosX, difficultyPosY}
+
+	active := 0
+	updateDifficultyDisplay(difficultyCords, active)
+	// termbox.SetCell(difficultyPosX, difficultyPosY, 'O', termbox.ColorDefault, termbox.ColorDefault)
+	termbox.Sync()
+
+	//
+
+	returnVal := -1
+	for {
+		keySeq := <-keyPress
+		if keySeq.Type == termbox.EventKey {
+			if keySeq.Key == termbox.KeyCtrlC {
+				// termbox.Close()
+				return returnVal
+			}
+
+			if keySeq.Key == termbox.KeyEsc {
+				MenuSelector(1)
+			}
+
+			if keySeq.Ch == 'w' {
+				if active > 0 {
+					active -= 1
+					updateDifficultyDisplay(difficultyCords, active)
+				}
+
+			} else if keySeq.Ch == 's' {
+				if active < 2 {
+					active += 1
+					updateDifficultyDisplay(difficultyCords, active)
+				}
+			} else if keySeq.Key == termbox.KeyEnter || keySeq.Ch == 'd' {
+				//DIfficulty set message
+				go updateDifficultySet(difficultyCords, active)
+				if menuOptions.active == 0 {
+					returnVal = 0
+				} else if menuOptions.active == 1 {
+					//inner menu (another menu inside of banner)
+					// menuOptions.banner = BannerEmpty
+					// _ = generateBanner(menuOptions)
+					// termbox.Sync()
+					returnVal = 1
+				} else if menuOptions.active == 2 {
+					returnVal = 2
+				}
+
+			}
+		}
+	}
+
+}
+func updateDifficultySet(difficultyCords []int, active int) {
+	termbox.SetCell(difficultyCords[0], difficultyCords[1]+4, 'X', termbox.ColorDefault, termbox.ColorDefault)
+
+	initialX, initialY := difficultyCords[0], difficultyCords[1]+4
+
+	for i := 0; i < 33; i++ {
+		termbox.SetCell(initialX+i, initialY, ' ', termbox.ColorDefault, termbox.ColorDefault)
+		termbox.Sync()
+	}
+
+	difOptions := []string{" Game Level Set To:    EASY", " Game Level Set To:    MODERATE", " Game Level Set To:  HARD"}
+	for i, option := range difOptions {
+		if i == active {
+			dynamicX := initialX
+			for _, char := range option {
+				termbox.SetCell(dynamicX, initialY, char, termbox.ColorRed, termbox.ColorDefault)
+				dynamicX++
+			}
+		}
+	}
+	termbox.Sync()
+	time.Sleep(3 * time.Second)
+	for i := 0; i < 33; i++ {
+		termbox.SetCell(initialX+i, initialY, ' ', termbox.ColorDefault, termbox.ColorDefault)
+	}
+	termbox.Sync()
+
+}
+
+func updateDifficultyDisplay(difficultyCords []int, active int) {
+	difOptions := []string{"1    ---    Easy", "2    ---    Moderate", "3    ---    Hard"}
+
+	initialX, initialY := difficultyCords[0], difficultyCords[1]
+
+	for i, line := range difOptions {
+		dynamicX := initialX
+		for _, char := range line {
+			if i == active {
+				termbox.SetCell(dynamicX, initialY, char, termbox.ColorRed, termbox.ColorDefault)
+			} else {
+				termbox.SetCell(dynamicX, initialY, char, termbox.ColorDefault, termbox.ColorDefault)
+			}
+			dynamicX++
+		}
+		initialY++
+	}
+	termbox.Sync()
 }
 
 func generateBanner(menuOptions Options) int {
