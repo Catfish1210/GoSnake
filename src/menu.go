@@ -15,6 +15,13 @@ type Options struct {
 	difficulty int
 }
 
+type MenuState struct {
+	active     int
+	difficulty int
+}
+
+// write difficulty to this struct and to this function below me, so you can still use the recursion but also return
+// the difficulty once game option 0 (play) is selected
 func MenuSelector(preselect int) int {
 	err := termbox.Init()
 	if err != nil {
@@ -61,10 +68,6 @@ func MenuSelector(preselect int) int {
 				if menuOptions.active == 0 {
 					return menuOptions.active
 				} else if menuOptions.active == 1 {
-					//inner menu (another menu inside of banner)
-					// menuOptions.banner = BannerEmpty
-					// _ = generateBanner(menuOptions)
-					// termbox.Sync()
 					menuOptions.difficulty = getDifficulty(menuOptions)
 					menuOptions.banner = Banner
 					_ = generateBanner(menuOptions)
@@ -108,50 +111,37 @@ func getDifficulty(menuOptions Options) int {
 
 	active := 0
 	updateDifficultyDisplay(difficultyCords, active)
-	// termbox.SetCell(difficultyPosX, difficultyPosY, 'O', termbox.ColorDefault, termbox.ColorDefault)
 	termbox.Sync()
-
-	//
 
 	returnVal := -1
 	for {
 		keySeq := <-keyPress
 		if keySeq.Type == termbox.EventKey {
 			if keySeq.Key == termbox.KeyCtrlC {
-				// termbox.Close()
 				return returnVal
 			}
-
 			if keySeq.Key == termbox.KeyEsc {
 				MenuSelector(1)
 			}
-
 			if keySeq.Ch == 'w' {
 				if active > 0 {
 					active -= 1
 					updateDifficultyDisplay(difficultyCords, active)
 				}
-
 			} else if keySeq.Ch == 's' {
 				if active < 2 {
 					active += 1
 					updateDifficultyDisplay(difficultyCords, active)
 				}
 			} else if keySeq.Key == termbox.KeyEnter || keySeq.Ch == 'd' {
-				//DIfficulty set message
 				go updateDifficultySet(difficultyCords, active)
 				if menuOptions.active == 0 {
 					returnVal = 0
 				} else if menuOptions.active == 1 {
-					//inner menu (another menu inside of banner)
-					// menuOptions.banner = BannerEmpty
-					// _ = generateBanner(menuOptions)
-					// termbox.Sync()
 					returnVal = 1
 				} else if menuOptions.active == 2 {
 					returnVal = 2
 				}
-
 			}
 		}
 	}
