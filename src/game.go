@@ -42,30 +42,47 @@ func InitializeGame() {
 	player.head.position = []int{posX, posY}
 	player.head.direction = "E"
 
+	var lastFoodPos []int
 	go func() {
 		// break on gameover (return f(gameover))
+
+		foodPos := GenerateFood(player, lastFoodPos)
 		for posX != terminalX {
+
 			termbox.SetCell(posX, posY, '■', termbox.ColorDefault, termbox.ColorDefault)
 			termbox.Sync()
-			time.Sleep(300 * time.Millisecond)
+			time.Sleep(200 * time.Millisecond)
 			termbox.SetCell(posX, posY, ' ', termbox.ColorDefault, termbox.ColorDefault)
 			termbox.Sync()
+
 			if player.head.direction == "N" {
 				posY--
+				// player.head.position = []int{player.head.position[0], posY}
 			}
 			if player.head.direction == "W" {
 				posX--
+				// player.head.position = []int{posX, player.head.position[1]}
 			}
 			if player.head.direction == "E" {
 				posX++
+				// player.head.position = []int{posX, player.head.position[1] - 1}
 			}
 			if player.head.direction == "S" {
 				posY++
+				// player.head.position = []int{player.head.position[0], posY}
 			}
+			player.head.position = []int{posX, posY}
+
+			if player.head.position[0] == foodPos[0] && player.head.position[1] == foodPos[1] {
+				foodPos = GenerateFood(player, lastFoodPos)
+				lastFoodPos = foodPos
+			}
+
 		}
 	}()
 	//
 	//
+
 	for {
 		keySeq := <-keyPress
 		if keySeq.Type == termbox.EventKey {
@@ -82,7 +99,8 @@ func InitializeGame() {
 			} else if keySeq.Ch == 'd' || keySeq.Ch == 'D' {
 				player.head.direction = "E"
 			} else if keySeq.Ch == 'f' || keySeq.Ch == 'F' {
-				GenerateFood(player)
+				foodPos := GenerateFood(player, lastFoodPos)
+				lastFoodPos = foodPos
 			} else if keySeq.Key == termbox.KeyEnter {
 
 			}
@@ -91,20 +109,30 @@ func InitializeGame() {
 
 }
 
-func GenerateFood(player snake) {
+func GenerateFood(player snake, lastFoodPos []int) []int {
+	var foodSpawnBlacklist [][]int
+	if lastFoodPos != nil {
+		foodSpawnBlacklist = append(foodSpawnBlacklist, lastFoodPos)
+	}
+
 	terminalX, terminalY := termbox.Size()
 	seed := time.Now().UnixNano()
 	RandomGenerator := rand.New(rand.NewSource(seed))
-	foodX := RandomGenerator.Intn(terminalX - 1)
-	foodY := RandomGenerator.Intn(terminalY - 1)
-	if foodX == 0 {
-		foodX++
+	for {
+		foodX := RandomGenerator.Intn(terminalX - 1)
+		foodY := RandomGenerator.Intn(terminalY - 1)
+		if foodX == 0 {
+			foodX++
+		}
+		if foodY == 0 {
+			foodY++
+		}
+		foodPos := []int{foodX, foodY}
+		termbox.SetCell(foodX, foodY, '■', termbox.ColorRed, termbox.ColorDefault)
+		termbox.Sync()
+		return foodPos
+
 	}
-	if foodY == 0 {
-		foodY++
-	}
-	termbox.SetCell(foodX, foodY, '@', termbox.ColorRed, termbox.ColorDefault)
-	termbox.Sync()
 }
 
 func DrawGameboard(terminalX, terminalY int) {
