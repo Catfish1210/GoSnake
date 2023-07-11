@@ -1,8 +1,19 @@
 package GoSnake
 
 import (
+	"time"
+
 	"github.com/nsf/termbox-go"
 )
+
+type snake struct {
+	head head
+}
+
+type head struct {
+	position  []int
+	direction string
+}
 
 func InitializeGame() {
 	err := termbox.Init()
@@ -21,13 +32,39 @@ func InitializeGame() {
 	//
 	//
 	terminalX, terminalY := termbox.Size()
-
 	DrawGameboard(terminalX, terminalY)
-	// termbox.SetCell(terminalX-2, terminalY-2, 'X', termbox.ColorDefault, termbox.ColorDefault)
-	// termbox.Sync()
+
+	//Starting pos
+	posX, posY := terminalX/2, terminalY/2
 	var player snake
-	player.headPos = []int{10, 10}
-	// updateHeadPos(player, player.headPos[0], player.headPos[1])
+	player.head.position = []int{posX, posY}
+	player.head.direction = "E"
+
+	go func() {
+		for posX != terminalX {
+			termbox.SetCell(posX, posY, '■', termbox.ColorDefault, termbox.ColorDefault)
+			termbox.Sync()
+			time.Sleep(1 * time.Second)
+			termbox.SetCell(posX, posY, ' ', termbox.ColorDefault, termbox.ColorDefault)
+			termbox.Sync()
+			if player.head.direction == "N" {
+				posY--
+			}
+			if player.head.direction == "W" {
+				posX--
+			}
+			if player.head.direction == "E" {
+				posX++
+			}
+			if player.head.direction == "S" {
+				posY++
+			}
+
+			// posX++
+			// posY++
+
+		}
+	}()
 	//
 	//
 	for {
@@ -38,44 +75,19 @@ func InitializeGame() {
 				break
 			}
 
-			if keySeq.Ch == 'w' {
-				player.headlastPos = player.headPos
-				player.headPos = []int{player.headPos[0], player.headPos[1] - 1}
-				updateHeadPos(player, player.headPos[0], player.headPos[1]-1)
-			} else if keySeq.Ch == 's' {
-				player.headlastPos = player.headPos
-				player.headPos = []int{player.headPos[0], player.headPos[1] + 1}
-				updateHeadPos(player, player.headPos[0], player.headPos[1]+1)
-			} else if keySeq.Ch == 'a' {
-				player.headlastPos = player.headPos
-				player.headPos = []int{player.headPos[0] - 1, player.headPos[1]}
-				updateHeadPos(player, player.headPos[0]-1, player.headPos[1])
-			} else if keySeq.Ch == 'd' {
-				player.headlastPos = player.headPos
-				player.headPos = []int{player.headPos[0] + 1, player.headPos[1]}
-				updateHeadPos(player, player.headPos[0]+1, player.headPos[1])
+			if keySeq.Ch == 'w' || keySeq.Ch == 'W' {
+				player.head.direction = "N"
+			} else if keySeq.Ch == 's' || keySeq.Ch == 'S' {
+				player.head.direction = "S"
+			} else if keySeq.Ch == 'a' || keySeq.Ch == 'A' {
+				player.head.direction = "W"
+			} else if keySeq.Ch == 'd' || keySeq.Ch == 'D' {
+				player.head.direction = "E"
 			} else if keySeq.Key == termbox.KeyEnter {
 
 			}
 		}
 	}
-
-}
-
-type snake struct {
-	headlastPos []int
-	headPos     []int //cords
-	tail        [][]int
-}
-
-func updateHeadPos(player snake, x, y int) {
-
-	// player.headlastPos = player.headPos
-	// player.headPos = []int{x, y}
-
-	termbox.SetCell(player.headlastPos[0], player.headlastPos[1], ' ', termbox.ColorDefault, termbox.ColorDefault)
-	termbox.SetCell(player.headPos[0], player.headPos[1], 'o', termbox.ColorDefault, termbox.ColorDefault)
-	termbox.Sync()
 
 }
 
