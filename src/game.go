@@ -40,7 +40,11 @@ func InitializeGame() {
 		}
 	}()
 
-	// Initialize gameboard
+	// Initialize gameboard make it roughly 1/4 or 1/3 of the size of the terminal 110x40
+	// display score top left on top of gameboard
+	// display top 10 on rightside of the gameboard
+	// when game is over and score is in top 10, have a field(bottom of gameboard) to enter name and save it into leaderboard.json
+	// and then return to menu
 	terminalX, terminalY := termbox.Size()
 	DrawGameboard(terminalX, terminalY)
 
@@ -52,7 +56,7 @@ func InitializeGame() {
 	player.tail.length = 0
 	// player.tail.positions = [][]int{}
 	var lastFoodPos []int
-	gameSpeed := 200
+	gameSpeed := 150
 	go func() {
 		// break on gameover (return f(gameover))
 
@@ -77,20 +81,20 @@ func InitializeGame() {
 			termbox.Sync()
 
 			if player.head.direction == "N" {
-				gameSpeed = 310
+				gameSpeed = 150
 				posY--
 			}
 			if player.head.direction == "W" {
 				posX--
-				gameSpeed = 200
+				gameSpeed = 60
 			}
 			if player.head.direction == "E" {
 				posX++
-				gameSpeed = 200
+				gameSpeed = 60
 			}
 			if player.head.direction == "S" {
 				posY++
-				gameSpeed = 310
+				gameSpeed = 150
 			}
 
 			player.head.position = []int{posX, posY}
@@ -98,14 +102,12 @@ func InitializeGame() {
 				foodPos = GenerateFood(player, lastFoodPos)
 				lastFoodPos = foodPos
 				player.tail.length++
+				player.tail.positions = TrimPath(player)
 			}
-
-			player = updateTail(player)
+			player.updateTail()
 
 		}
 	}()
-	//
-	//
 
 	for {
 		keySeq := <-keyPress
@@ -123,36 +125,36 @@ func InitializeGame() {
 			} else if keySeq.Ch == 'd' || keySeq.Ch == 'D' {
 				player.head.direction = "E"
 			} else if keySeq.Ch == 'f' || keySeq.Ch == 'F' {
-				// foodPos := GenerateFood(player, lastFoodPos)
-				// lastFoodPos = foodPos
 				termbox.Close()
 				fmt.Println("Tail Positions:", player.tail.positions)
 				fmt.Println("Actual tail: ", player.tail.actual)
+				fmt.Println("Food eaten: ", player.tail.length)
 
 				break
 			} else if keySeq.Key == termbox.KeyEnter {
-
 			}
 		}
 	}
-
 }
 
-func updateTail(player snake) snake {
-	player = savePath(player)
+func (player *snake) updateTail() {
+	player.savePath()
 	if player.tail.length > 0 {
 		length := player.tail.length
 		todraw := player.tail.positions[len(player.tail.positions)-length-1:]
-
 		player.tail.actual = todraw[:len(todraw)-1]
 	}
-
-	return player
 }
 
-func savePath(player snake) snake {
+func (player *snake) savePath() snake {
 	player.tail.positions = append(player.tail.positions, player.head.position)
-	return player
+	return *player
+}
+
+func TrimPath(player snake) [][]int {
+	actualLen := len(player.tail.actual)
+	trimmedPath := player.tail.positions[len(player.tail.positions)-actualLen-1:]
+	return trimmedPath
 }
 
 func GenerateFood(player snake, lastFoodPos []int) []int {
@@ -160,7 +162,6 @@ func GenerateFood(player snake, lastFoodPos []int) []int {
 	if lastFoodPos != nil {
 		foodSpawnBlacklist = append(foodSpawnBlacklist, lastFoodPos)
 	}
-
 	terminalX, terminalY := termbox.Size()
 	seed := time.Now().UnixNano()
 	RandomGenerator := rand.New(rand.NewSource(seed))
@@ -186,7 +187,6 @@ func DrawGameboard(terminalX, terminalY int) {
 	drawElements := BorderPrimitives
 	for verticalPos := 0; verticalPos <= terminalY; verticalPos++ {
 		for horizontalPos := 0; horizontalPos <= terminalX; horizontalPos++ {
-
 			// Left-Top Corner
 			if verticalPos == 0 && horizontalPos == 0 {
 				termbox.SetCell(horizontalPos, verticalPos, drawElements[2], termbox.ColorGreen, termbox.ColorDefault)
@@ -206,7 +206,6 @@ func DrawGameboard(terminalX, terminalY int) {
 			} else if horizontalPos == 0 || horizontalPos == terminalX-1 {
 				termbox.SetCell(horizontalPos, verticalPos, drawElements[1], termbox.ColorGreen, termbox.ColorDefault)
 			}
-
 		}
 	}
 	termbox.Sync()
