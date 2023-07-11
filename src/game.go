@@ -1,6 +1,7 @@
 package GoSnake
 
 import (
+	"math/rand"
 	"time"
 
 	"github.com/nsf/termbox-go"
@@ -16,6 +17,7 @@ type head struct {
 }
 
 func InitializeGame() {
+	// Initialize termbox and event listener
 	err := termbox.Init()
 	if err != nil {
 		panic(err)
@@ -29,8 +31,8 @@ func InitializeGame() {
 			keyPress <- keySeq
 		}
 	}()
-	//
-	//
+
+	// Initialize gameboard
 	terminalX, terminalY := termbox.Size()
 	DrawGameboard(terminalX, terminalY)
 
@@ -41,10 +43,11 @@ func InitializeGame() {
 	player.head.direction = "E"
 
 	go func() {
+		// break on gameover (return f(gameover))
 		for posX != terminalX {
 			termbox.SetCell(posX, posY, '■', termbox.ColorDefault, termbox.ColorDefault)
 			termbox.Sync()
-			time.Sleep(1 * time.Second)
+			time.Sleep(300 * time.Millisecond)
 			termbox.SetCell(posX, posY, ' ', termbox.ColorDefault, termbox.ColorDefault)
 			termbox.Sync()
 			if player.head.direction == "N" {
@@ -59,10 +62,6 @@ func InitializeGame() {
 			if player.head.direction == "S" {
 				posY++
 			}
-
-			// posX++
-			// posY++
-
 		}
 	}()
 	//
@@ -74,7 +73,6 @@ func InitializeGame() {
 				termbox.Close()
 				break
 			}
-
 			if keySeq.Ch == 'w' || keySeq.Ch == 'W' {
 				player.head.direction = "N"
 			} else if keySeq.Ch == 's' || keySeq.Ch == 'S' {
@@ -83,12 +81,30 @@ func InitializeGame() {
 				player.head.direction = "W"
 			} else if keySeq.Ch == 'd' || keySeq.Ch == 'D' {
 				player.head.direction = "E"
+			} else if keySeq.Ch == 'f' || keySeq.Ch == 'F' {
+				GenerateFood(player)
 			} else if keySeq.Key == termbox.KeyEnter {
 
 			}
 		}
 	}
 
+}
+
+func GenerateFood(player snake) {
+	terminalX, terminalY := termbox.Size()
+	seed := time.Now().UnixNano()
+	RandomGenerator := rand.New(rand.NewSource(seed))
+	foodX := RandomGenerator.Intn(terminalX - 1)
+	foodY := RandomGenerator.Intn(terminalY - 1)
+	if foodX == 0 {
+		foodX++
+	}
+	if foodY == 0 {
+		foodY++
+	}
+	termbox.SetCell(foodX, foodY, '@', termbox.ColorRed, termbox.ColorDefault)
+	termbox.Sync()
 }
 
 func DrawGameboard(terminalX, terminalY int) {
