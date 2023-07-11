@@ -9,11 +9,17 @@ import (
 
 type snake struct {
 	head head
+	tail tail
 }
 
 type head struct {
 	position  []int
 	direction string
+}
+
+type tail struct {
+	length    int
+	positions [][]int
 }
 
 func InitializeGame() {
@@ -41,8 +47,10 @@ func InitializeGame() {
 	var player snake
 	player.head.position = []int{posX, posY}
 	player.head.direction = "E"
-
+	// player.tail.length = 3
+	// player.tail.positions = [][]int{}
 	var lastFoodPos []int
+	gameSpeed := 200
 	go func() {
 		// break on gameover (return f(gameover))
 
@@ -51,28 +59,29 @@ func InitializeGame() {
 
 			termbox.SetCell(posX, posY, '■', termbox.ColorDefault, termbox.ColorDefault)
 			termbox.Sync()
-			time.Sleep(200 * time.Millisecond)
+			time.Sleep(time.Duration(gameSpeed) * time.Millisecond)
 			termbox.SetCell(posX, posY, ' ', termbox.ColorDefault, termbox.ColorDefault)
+			updateTail(player)
 			termbox.Sync()
 
 			if player.head.direction == "N" {
+				gameSpeed = 310
 				posY--
-				// player.head.position = []int{player.head.position[0], posY}
 			}
 			if player.head.direction == "W" {
 				posX--
-				// player.head.position = []int{posX, player.head.position[1]}
+				gameSpeed = 200
 			}
 			if player.head.direction == "E" {
 				posX++
-				// player.head.position = []int{posX, player.head.position[1] - 1}
+				gameSpeed = 200
 			}
 			if player.head.direction == "S" {
 				posY++
-				// player.head.position = []int{player.head.position[0], posY}
+				gameSpeed = 310
 			}
-			player.head.position = []int{posX, posY}
 
+			player.head.position = []int{posX, posY}
 			if player.head.position[0] == foodPos[0] && player.head.position[1] == foodPos[1] {
 				foodPos = GenerateFood(player, lastFoodPos)
 				lastFoodPos = foodPos
@@ -106,6 +115,22 @@ func InitializeGame() {
 			}
 		}
 	}
+
+}
+
+func updateTail(player snake) {
+
+	player.tail.positions = append(player.tail.positions, []int{player.head.position[0], player.head.position[1]})
+	//
+	for _, tails := range player.tail.positions {
+		// if player.head.direction == "N" || player.head.direction == "S" {
+		// 	termbox.SetCell(tails[0], tails[1], '█', termbox.ColorGreen, termbox.ColorDefault)
+		// } else {
+		// 	termbox.SetCell(tails[0], tails[1], '■', termbox.ColorGreen, termbox.ColorDefault)
+		// }
+		termbox.SetCell(tails[0], tails[1], '■', termbox.ColorGreen, termbox.ColorDefault)
+	}
+	termbox.Sync()
 
 }
 
