@@ -1,6 +1,7 @@
 package GoSnake
 
 import (
+	"fmt"
 	"math/rand"
 	"time"
 
@@ -20,6 +21,7 @@ type head struct {
 type tail struct {
 	length    int
 	positions [][]int
+	actual    [][]int
 }
 
 func InitializeGame() {
@@ -47,7 +49,7 @@ func InitializeGame() {
 	var player snake
 	player.head.position = []int{posX, posY}
 	player.head.direction = "E"
-	// player.tail.length = 3
+	player.tail.length = 0
 	// player.tail.positions = [][]int{}
 	var lastFoodPos []int
 	gameSpeed := 200
@@ -58,10 +60,20 @@ func InitializeGame() {
 		for posX != terminalX {
 
 			termbox.SetCell(posX, posY, '■', termbox.ColorDefault, termbox.ColorDefault)
+			//add tail
+			for _, tailcords := range player.tail.actual {
+				termbox.SetCell(tailcords[0], tailcords[1], '■', termbox.ColorGreen, termbox.ColorDefault)
+			}
+			//
 			termbox.Sync()
 			time.Sleep(time.Duration(gameSpeed) * time.Millisecond)
+			//remove tail
+			for _, tailcords := range player.tail.actual {
+				termbox.SetCell(tailcords[0], tailcords[1], ' ', termbox.ColorDefault, termbox.ColorDefault)
+			}
 			termbox.SetCell(posX, posY, ' ', termbox.ColorDefault, termbox.ColorDefault)
-			updateTail(player)
+			//
+
 			termbox.Sync()
 
 			if player.head.direction == "N" {
@@ -85,7 +97,10 @@ func InitializeGame() {
 			if player.head.position[0] == foodPos[0] && player.head.position[1] == foodPos[1] {
 				foodPos = GenerateFood(player, lastFoodPos)
 				lastFoodPos = foodPos
+				player.tail.length++
 			}
+
+			player = updateTail(player)
 
 		}
 	}()
@@ -108,8 +123,13 @@ func InitializeGame() {
 			} else if keySeq.Ch == 'd' || keySeq.Ch == 'D' {
 				player.head.direction = "E"
 			} else if keySeq.Ch == 'f' || keySeq.Ch == 'F' {
-				foodPos := GenerateFood(player, lastFoodPos)
-				lastFoodPos = foodPos
+				// foodPos := GenerateFood(player, lastFoodPos)
+				// lastFoodPos = foodPos
+				termbox.Close()
+				fmt.Println("Tail Positions:", player.tail.positions)
+				fmt.Println("Actual tail: ", player.tail.actual)
+
+				break
 			} else if keySeq.Key == termbox.KeyEnter {
 
 			}
@@ -118,20 +138,21 @@ func InitializeGame() {
 
 }
 
-func updateTail(player snake) {
+func updateTail(player snake) snake {
+	player = savePath(player)
+	if player.tail.length > 0 {
+		length := player.tail.length
+		todraw := player.tail.positions[len(player.tail.positions)-length-1:]
 
-	player.tail.positions = append(player.tail.positions, []int{player.head.position[0], player.head.position[1]})
-	//
-	for _, tails := range player.tail.positions {
-		// if player.head.direction == "N" || player.head.direction == "S" {
-		// 	termbox.SetCell(tails[0], tails[1], '█', termbox.ColorGreen, termbox.ColorDefault)
-		// } else {
-		// 	termbox.SetCell(tails[0], tails[1], '■', termbox.ColorGreen, termbox.ColorDefault)
-		// }
-		termbox.SetCell(tails[0], tails[1], '■', termbox.ColorGreen, termbox.ColorDefault)
+		player.tail.actual = todraw[:len(todraw)-1]
 	}
-	termbox.Sync()
 
+	return player
+}
+
+func savePath(player snake) snake {
+	player.tail.positions = append(player.tail.positions, player.head.position)
+	return player
 }
 
 func GenerateFood(player snake, lastFoodPos []int) []int {
