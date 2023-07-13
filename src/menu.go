@@ -67,6 +67,7 @@ func MenuSelector(preselect int) int {
 			} else if keySeq.Key == termbox.KeyEnter || keySeq.Ch == 'd' {
 				if menuOptions.active == 0 {
 					//
+					termbox.Clear(termbox.ColorDefault, termbox.ColorDefault)
 					InitializeGame()
 					//
 					return menuOptions.active
