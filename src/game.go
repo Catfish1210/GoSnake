@@ -132,6 +132,8 @@ func InitializeGame() {
 
 				break
 			} else if keySeq.Key == termbox.KeyEnter {
+			} else if keySeq.Ch == 'r' || keySeq.Ch == 'R' {
+				player.tail.length++
 			}
 		}
 	}
