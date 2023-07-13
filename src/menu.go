@@ -66,6 +66,9 @@ func MenuSelector(preselect int) int {
 				}
 			} else if keySeq.Key == termbox.KeyEnter || keySeq.Ch == 'd' {
 				if menuOptions.active == 0 {
+					//
+					InitializeGame()
+					//
 					return menuOptions.active
 				} else if menuOptions.active == 1 {
 					menuOptions.difficulty = getDifficulty(menuOptions)

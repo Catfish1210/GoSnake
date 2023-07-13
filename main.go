@@ -3,14 +3,15 @@ package main
 //110 x 40 Terminal size
 import (
 	GoSnake "GoSnake/src"
+	"fmt"
 	// "fmt"
 	// "github.com/nsf/termbox-go"
 )
 
 func main() {
 
-	// fmt.Println(GoSnake.MenuSelector(0))
-	GoSnake.InitializeGame()
+	fmt.Println(GoSnake.MenuSelector(0))
+	// GoSnake.InitializeGame()
 	// err := termbox.Init()
 	// if err != nil {
 	// 	panic(err)
