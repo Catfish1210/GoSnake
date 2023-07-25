@@ -24,7 +24,3 @@ To run this terminal-based Snake game, you need to have Go installed on your mac
 `go build`
 4. Run the game: <br/>
 `./GoSnake`
-
-## Controls
-- Use WASD/enter keys to navigate the menu
-- Use WASD keys to control the snake's movement
