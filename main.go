@@ -20,12 +20,12 @@ func main() {
 
 	// keyPress := make(chan termbox.Event)
 
-	// go func() {
-	// 	for {
-	// 		keySeq := termbox.PollEvent()
-	// 		keyPress <- keySeq
-	// 	}
-	// }()
+	go func() {
+		for {
+			keySeq := termbox.PollEvent()
+			keyPress <- keySeq
+		}
+	}()
 
 	// //func generate menu
 	// // go GetMenu(){
